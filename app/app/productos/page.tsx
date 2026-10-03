@@ -138,6 +138,9 @@ export default async function Productos() {
         <h3 className="mt-8 text-lg font-semibold">De qué productos se compone cada categoría</h3>
         <div className="mt-3 rounded-lg border border-stone-200 bg-white p-4">
           <ComposicionCategoria productos={productosCat} pesos={pesoSemestre} />
+          <p className="mt-4 text-xs text-stone-500">
+            Incluye productos hoy inactivos, porque tuvieron ventas en el semestre.
+          </p>
         </div>
       </section>
 
