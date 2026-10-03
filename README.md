@@ -227,7 +227,7 @@ order by canal, pais;
 
 **Por qué importa.** Saber qué productos tiran de las ventas y cuáles no sirve para decidir dónde poner el esfuerzo. Cinco productos hacen el 39 % de las ventas, y son los que ya demuestran demanda en los dos países: ahí es donde las campañas tienen más probabilidades de vender. Los tres que menos se venden (Chaqueta Bomber, Mocasines y Botas Chelsea) se venden casi solo en Alemania y con poco volumen, así que no hay base en los datos para dedicarles presupuesto de campaña ni para llevarlos a España.
 
-**Cómo lo he calculado.** Filas: las líneas de los 585 pedidos analizables que tienen ficha en `products` (se excluyen 16 líneas sin ficha). Los productos inactivos se mantienen y "Sudadera con Capucha" y "Sudadera Capucha" cuentan como un solo producto (ver *Modelado de datos*).
+**Cómo lo he calculado.** Filas: las líneas de los 585 pedidos analizables que tienen ficha en `products` (se excluyen 16 líneas con ID de producto erróneo). Los productos inactivos se mantienen y "Sudadera con Capucha" y "Sudadera Capucha" cuentan como un solo producto (ver *Modelado de datos*).
 
 Medidas, por producto:
 
@@ -408,7 +408,7 @@ Resultado: 585 pedidos, 41.786,13 € de ventas y 71,43 € de ticket medio. Es 
 - **Duplicado de gasto.** Dejo una sola fila por fecha y canal: se elimina una de Google Ads del 22 de mayo (8,47 €). El tramo del 15 de marzo al 30 de junio queda en 540 filas, 108 días por 5 canales.
 - **Cruce de canales.** Cada tabla se resume por canal en la ventana (ventas y pedidos por un lado, gasto por otro) y se unen los resúmenes por el nombre del canal.
 - **Importe de línea = cantidad × `unit_price_cents` / 100.** Con las líneas que tienen ficha, la suma coincide exactamente con el subtotal de los 585 pedidos.
-- **Líneas sin ficha.** 16 líneas de pedidos analizables tienen un `product_id` entre 901 y 919 que no existe en `products` (579,20 €). Se excluyen al cruzar con el catálogo.
+- **Exclusión de productos con ID erróneo.** 16 líneas de pedidos analizables apuntan a un `product_id` entre 901 y 919 que no existe en `products` (579,20 €). Las considero erróneas y las excluyo al cruzar con el catálogo. Al quitarlas, la suma de las líneas coincide exactamente con el subtotal de los 585 pedidos de `orders`, lo que indica que son líneas erróneas.
 - **Sudaderas.** "Sudadera con Capucha" (id 24, del 4 de enero al 14 de marzo a 54,95 €) y "Sudadera Capucha" (id 2, desde el 18 de marzo a 59,95 €) no se solapan: las unifico como un solo producto.
 - **Productos inactivos.** Los de `active = false` (Camiseta Técnica, Mochila Deporte y Sudadera con Capucha) se mantienen: tienen ventas reales en el semestre (2.753,90 €, el 6,6 %).
 - **Categoría.** La de la ficha del producto: las Zapatillas Trail Urbanas figuran en Accesorios y se respeta.
@@ -431,7 +431,7 @@ Cada uno dice qué hice, por qué y cuánto cambiaría el resultado con la otra 
 - **Ventana de canales desde el 15 de marzo.** El anexo dice que en marzo cambió la atribución, pero no el día. Con el 1 de marzo el ROAS (ventas atribuidas / gasto) sería: Meta 3,45, Google 4,59, Email 12,98, TikTok 16,52 y Email + TikTok 13,91. Con el 1 de abril: Meta 3,72, Google 4,74, Email 13,42, TikTok 19,51 y Email + TikTok 15,05. Con el 15 de marzo: 3,68, 4,84, 13,21, 16,44 y 14,07. La conclusión no depende del día: Meta devuelve mucho menos que Email y TikTok en los tres casos.
 - **"Newsletter" cuenta como Email.** Aparte, el ROAS de Email pasaría de 13,21 a 8,38 y el de Email + TikTok de 14,07 a 10,53. Meta seguiría devolviendo menos.
 - **Quitar la fila duplicada de gasto.** Con ella, el gasto de Google Ads sería 791,45 € en vez de 782,98 € y su ROAS 4,79 en vez de 4,84.
-- **Excluir las 16 líneas sin ficha.** Con ellas, las líneas dejarían de cuadrar con el subtotal de los pedidos y no tendrían ni producto ni categoría (579,20 €).
+- **Excluir las líneas con ID de producto erróneo.** Porque no tienen ficha, así que no se sabe qué producto ni qué categoría son, y además descuadran con `orders`. Si se incluyeran, las líneas ya no sumarían el subtotal de los pedidos y habría 579,20 € sin producto ni categoría en las conclusiones 5 y 6.
 - **Mantener los productos inactivos.** Son ventas reales del semestre. Sin ellos se perderían 2.753,90 € (6,6 %) y el top 5 pasaría a ser Bolso, Vestido, Pantalón, Zapatillas Running y Zapatillas Classic.
 - **Zapatillas Trail Urbanas en Accesorios (la ficha).** Si se contaran como Calzado, Calzado en Alemania subiría un 31,4 % (en vez de 24,4 %) y pesaría el 33,3 %; en España bajaría un 12,8 % (en vez de 8,5 %) y pesaría el 16,3 %. La dirección no cambia.
 - **No usar la vista `v_kpis_mensuales`.** Con ella, enero a junio saldría con 744 pedidos en vez de 719.
