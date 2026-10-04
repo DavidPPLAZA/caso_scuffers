@@ -426,7 +426,7 @@ Cada uno dice qué hice, por qué y cuánto cambiaría el resultado con la otra 
 - **Ventas sin IVA ni envío.** Porque el IVA no es ingreso y cambia por país. Con el importe total facturado (`total_amount_cents`) serían 51.590,27 € y el ticket medio 88,19 €, con 9.804,14 € de IVA y envío mezclados.
 - **Entran `delivered` y `pending`.** Porque los pendientes siguen en curso. Solo con `delivered`: 559 pedidos, 40.047,64 € y ticket de 71,64 €. Con `cancelled` y `refunded` dentro: 700 pedidos, 50.125,79 € y ticket de 71,61 €. El ticket casi no se mueve, pero las ventas subirían 8.339,66 € de pedidos que no son venta.
 - **Julio fuera.** Porque el mes está a medias. Con julio: 626 pedidos, 44.625,68 € y ticket de 71,29 €.
-- **"Pedidos "Dados de baja" fuera.** Con ellos: 596 pedidos, 42.483,12 € y ticket de 71,28 €.
+- **Pedidos "Dados de baja" fuera.** Con ellos: 596 pedidos, 42.483,12 € y ticket de 71,28 €.
 - **Subtotales de menos de 1 € considerados outliers.** Con ellos: 593 pedidos, 41.790,79 € y el ticket baja a 70,47 € (casi un euro menos por 8 pedidos que no pueden ser compras reales).
 - **Ventana de canales desde el 15 de marzo.** El anexo dice que en marzo cambió la atribución, pero no el día. Con el 1 de marzo el ROAS (ventas atribuidas / gasto) sería: Meta 3,45, Google 4,59, Email 12,98, TikTok 16,52 y Email + TikTok 13,91. Con el 1 de abril: Meta 3,72, Google 4,74, Email 13,42, TikTok 19,51 y Email + TikTok 15,05. Con el 15 de marzo: 3,68, 4,84, 13,21, 16,44 y 14,07. La conclusión no depende del día: Meta devuelve mucho menos que Email y TikTok en los tres casos.
 - **"Newsletter" cuenta como Email.** Aparte, el ROAS de Email pasaría de 13,21 a 8,38 y el de Email + TikTok de 14,07 a 10,53. Meta seguiría devolviendo menos.
