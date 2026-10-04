@@ -426,8 +426,8 @@ Cada uno dice qué hice, por qué y cuánto cambiaría el resultado con la otra 
 - **Ventas sin IVA ni envío.** Porque el IVA no es ingreso y cambia por país. Con el importe total facturado (`total_amount_cents`) serían 51.590,27 € y el ticket medio 88,19 €, con 9.804,14 € de IVA y envío mezclados.
 - **Entran `delivered` y `pending`.** Porque los pendientes siguen en curso. Solo con `delivered`: 559 pedidos, 40.047,64 € y ticket de 71,64 €. Con `cancelled` y `refunded` dentro: 700 pedidos, 50.125,79 € y ticket de 71,61 €. El ticket casi no se mueve, pero las ventas subirían 8.339,66 € de pedidos que no son venta.
 - **Julio fuera.** Porque el mes está a medias. Con julio: 626 pedidos, 44.625,68 € y ticket de 71,29 €.
-- **Dados de baja fuera.** Con ellos: 596 pedidos, 42.483,12 € y ticket de 71,28 €.
-- **Subtotales de menos de 1 € fuera.** Con ellos: 593 pedidos, 41.790,79 € y el ticket baja a 70,47 € (casi un euro menos por 8 pedidos que no pueden ser compras reales).
+- **"Pedidos "Dados de baja" fuera.** Con ellos: 596 pedidos, 42.483,12 € y ticket de 71,28 €.
+- **Subtotales de menos de 1 € considerados outliers.** Con ellos: 593 pedidos, 41.790,79 € y el ticket baja a 70,47 € (casi un euro menos por 8 pedidos que no pueden ser compras reales).
 - **Ventana de canales desde el 15 de marzo.** El anexo dice que en marzo cambió la atribución, pero no el día. Con el 1 de marzo el ROAS (ventas atribuidas / gasto) sería: Meta 3,45, Google 4,59, Email 12,98, TikTok 16,52 y Email + TikTok 13,91. Con el 1 de abril: Meta 3,72, Google 4,74, Email 13,42, TikTok 19,51 y Email + TikTok 15,05. Con el 15 de marzo: 3,68, 4,84, 13,21, 16,44 y 14,07. La conclusión no depende del día: Meta devuelve mucho menos que Email y TikTok en los tres casos.
 - **"Newsletter" cuenta como Email.** Aparte, el ROAS de Email pasaría de 13,21 a 8,38 y el de Email + TikTok de 14,07 a 10,53. Meta seguiría devolviendo menos.
 - **Quitar la fila duplicada de gasto.** Con ella, el gasto de Google Ads sería 791,45 € en vez de 782,98 € y su ROAS 4,79 en vez de 4,84.
@@ -436,6 +436,8 @@ Cada uno dice qué hice, por qué y cuánto cambiaría el resultado con la otra 
 - **Zapatillas Trail Urbanas en Accesorios (la ficha).** Si se contaran como Calzado, Calzado en Alemania subiría un 31,4 % (en vez de 24,4 %) y pesaría el 33,3 %; en España bajaría un 12,8 % (en vez de 8,5 %) y pesaría el 16,3 %. La dirección no cambia.
 - **No usar la vista `v_kpis_mensuales`.** Con ella, enero a junio saldría con 744 pedidos en vez de 719.
 - **ROAS medio sobre ventas atribuidas.** No hay datos de gasto incremental ni de márgenes, así que no calculo ROAS marginal ni beneficio.
+- **Nota sobre sql**. Los archivos cuyo nombre lleva conclusion (02, 03, 05, 06, 10 y 11) son las queries de las seis conclusiones de este README, tal cual. Los que llevan panel alimentan los gráficos del panel y no son conclusiones; están para que cada cifra del panel tenga su query en el repositorio.
+- **Alcance del modelo**.La base tiene 9 tablas y 3 vistas. Para estas conclusiones solo hacen falta orders, order_items y products, cruzadas por clave, y marketing_spend, que no tiene clave común y se une por el nombre del canal. No he usado customers, refunds, product_reviews, promotions ni order_promotions porque ninguna conclusión las necesita. Se podría modelar más, pero me ceñí a lo que responden las preguntas del encargo. Este es el modelo completo de la base, con las relaciones deducidas de los nombres de las columnas:
 
 ### Decisiones que sí cambian la conclusión
 
@@ -444,11 +446,13 @@ Cada uno dice qué hice, por qué y cuánto cambiaría el resultado con la otra 
 
 ### Limitaciones
 
-- **No hay datos del año anterior.** No se puede comparar con el mismo periodo de 2025, así que no sé separar crecimiento de estacionalidad: que abril sea el mejor mes o que T2 supere a T1 en Calzado en Alemania no prueba una tendencia. Tampoco sé si el nivel de ventas, de gasto o de ROAS es normal para la tienda.
+- **No hay datos del año anterior.** No se puede comparar con el mismo periodo de 2025 porque no hay datos, la comparación para saber que es "bueno", "malo" o "normal" es complicada porque entre meses no es una comparación fiel del desempeño.
 - **Pocos datos.** Seis meses, 585 pedidos y, en Alemania, solo 37 clientes. Deporte tiene dos meses de ventas y TikTok 143,35 € de gasto y 34 pedidos: sus cifras pueden moverse mucho.
 - **Sin márgenes ni costes.** Todo es retorno en ventas, no beneficio. Un canal con buen ROAS no tiene por qué ser rentable.
 - **Atribución.** El ROAS es medio, no marginal: con poco gasto no tiene por qué mantenerse al subirlo. El modelo de atribución cambió en marzo y no se sabe el día exacto.
-- **El gasto no viene por país.** No se sabe a quién va dirigido ni se puede calcular el ROAS por país (conclusión 4).
+- **El gasto no viene por país.** No se sabe a qué pais va dirigido el gasto por canal con los datos que tenemos porque no está diferenciado, y hemos podido comprobar que hay una diferencia muy grande entre la naturaleza de Alemania y España por lo que sería interesante tenerlo.
 - **Julio incompleto.** Hay pedidos hasta el 12 de julio, pero no se usan.
 - **Discrepancias con el anexo.** Deporte existe en los datos desde el 1 de mayo, no desde principios de año. El anexo habla de un mercado incipiente en Alemania, pero genera el 50,7 % de las ventas.
-- **Son correlaciones.** Las acciones propuestas en cada conclusión son hipótesis para probar en pequeño, no efectos demostrados.
+
+**Nota sobre sql**. Los archivos cuyo nombre lleva conclusion (02, 03, 05, 06, 10 y 11) son las queries de las seis conclusiones de este README, tal cual. Los que llevan panel alimentan los gráficos del panel y no son conclusiones; están para que cada cifra del panel tenga su query en el repositorio.
+**Alcance del modelo**
