@@ -384,60 +384,6 @@ erDiagram
 - `orders` basta para país, cliente (`customer_id`), canal y ventas: un pedido es una fila.
 - `order_items` y `products` solo se usan en producto y categoría (conclusiones 5 y 6): `orders.id = order_items.order_id` y `order_items.product_id = products.id`, con cruce interno.
 - `marketing_spend` no tiene clave común con `orders` ni país: se resume por canal y se une por el nombre del canal ya limpiado (conclusión 3).
-- No se usa la vista `v_kpis_mensuales` ni `order_promotions`: la vista cuenta cada promoción como un pedido distinto (744 pedidos de enero a junio frente a los 719 de `orders`; los sobrantes son 26 pedidos con 2 promociones).
-
-### Qué filas entran en cada cifra
-
-De 767 pedidos en `orders` quedan 585 analizables. Cada paso es un filtro de las queries:
-
-| Paso | Pedidos que quedan | Quitados | Por qué |
-|---|---|---|---|
-| Tabla `orders` | 767 | | |
-| Fuera julio (`created_at < '2026-07-01'`) | 719 | 48 | El mes está a medias (los datos llegan al 12 de julio) y el análisis es del primer semestre. |
-| Fuera dados de baja (`deleted_at` no nulo) | 708 | 11 | Pedidos anulados en el sistema. |
-| Fuera `cancelled` y `refunded` | 593 | 115 | No son venta. Entran `delivered` y `pending` (en proceso). |
-| Fuera subtotal menor de 1 € | 585 | 8 | Subtotales de 20 y 70 céntimos; el producto más barato cuesta 9,95 €. |
-
-Resultado: 585 pedidos, 41.786,13 € de ventas y 71,43 € de ticket medio. Es la base de las conclusiones 1, 2, 5 y 6. Las conclusiones 3 y 4 usan solo los creados del 15 de marzo al 30 de junio (350 pedidos).
-
-### Transformaciones por el camino
-
-- **Ventas = `subtotal_cents` / 100.** Es el valor de los productos, sin IVA ni envío: el IVA se ingresa a Hacienda y es distinto en Alemania (19 %) y España (21 %), y el envío es un coste trasladado al cliente.
-- **Canal del pedido.** Unifico las variantes de Meta ("Meta Ads", "Meta Ads " con espacio, "META ADS"), sumo "Instagram Ads" a Meta Ads (el anexo define Meta como Instagram y Facebook) y paso "Newsletter" a Email (es email marketing y `marketing_spend` no tiene canal Newsletter): 27 pedidos, 1.907,62 €.
-- **Gasto.** Quito espacios y sumo "Instagram Ads" a Meta Ads. Google Ads viene en céntimos (`EUR_CENTS`) y el resto en euros: paso todo a euros.
-- **Duplicado de gasto.** Dejo una sola fila por fecha y canal: se elimina una de Google Ads del 22 de mayo (8,47 €). El tramo del 15 de marzo al 30 de junio queda en 540 filas, 108 días por 5 canales.
-- **Cruce de canales.** Cada tabla se resume por canal en la ventana (ventas y pedidos por un lado, gasto por otro) y se unen los resúmenes por el nombre del canal.
-- **Importe de línea = cantidad × `unit_price_cents` / 100.** Con las líneas que tienen ficha, la suma coincide exactamente con el subtotal de los 585 pedidos.
-- **Exclusión de productos con ID erróneo.** 16 líneas de pedidos analizables apuntan a un `product_id` entre 901 y 919 que no existe en `products` (579,20 €). Las considero erróneas y las excluyo al cruzar con el catálogo. Al quitarlas, la suma de las líneas coincide exactamente con el subtotal de los 585 pedidos de `orders`, lo que indica que son líneas erróneas.
-- **Sudaderas.** "Sudadera con Capucha" (id 24, del 4 de enero al 14 de marzo a 54,95 €) y "Sudadera Capucha" (id 2, desde el 18 de marzo a 59,95 €) no se solapan: las unifico como un solo producto.
-- **Productos inactivos.** Los de `active = false` (Camiseta Técnica, Mochila Deporte y Sudadera con Capucha) se mantienen: tienen ventas reales en el semestre (2.753,90 €, el 6,6 %).
-- **Categoría.** La de la ficha del producto: las Zapatillas Trail Urbanas figuran en Accesorios y se respeta.
-- **Cliente y repetición.** Cliente = `customer_id` con pedidos analizables en ese país; repite quien tiene 2 o más pedidos en el semestre.
-- **Periodos.** T1 = enero–marzo y T2 = abril–junio. Deporte tiene fecha de alta el 1 de mayo, así que solo se compara mayo con junio.
-
----
-
-## Supuestos y limitaciones
-
-### Supuestos
-
-Cada uno dice qué hice, por qué y cuánto cambiaría el resultado con la otra opción.
-
-- **Ventas sin IVA ni envío.** Porque el IVA no es ingreso y cambia por país. Con el importe total facturado (`total_amount_cents`) serían 51.590,27 € y el ticket medio 88,19 €, con 9.804,14 € de IVA y envío mezclados.
-- **Entran `delivered` y `pending`.** Porque los pendientes siguen en curso. Solo con `delivered`: 559 pedidos, 40.047,64 € y ticket de 71,64 €. Con `cancelled` y `refunded` dentro: 700 pedidos, 50.125,79 € y ticket de 71,61 €. El ticket casi no se mueve, pero las ventas subirían 8.339,66 € de pedidos que no son venta.
-- **Julio fuera.** Porque el mes está a medias. Con julio: 626 pedidos, 44.625,68 € y ticket de 71,29 €.
-- **Pedidos "Dados de baja" fuera.** Con ellos: 596 pedidos, 42.483,12 € y ticket de 71,28 €.
-- **Subtotales de menos de 1 € considerados outliers.** Con ellos: 593 pedidos, 41.790,79 € y el ticket baja a 70,47 € (casi un euro menos por 8 pedidos que no pueden ser compras reales).
-- **Ventana de canales desde el 15 de marzo.** El anexo dice que en marzo cambió la atribución, pero no el día. Con el 1 de marzo el ROAS (ventas atribuidas / gasto) sería: Meta 3,45, Google 4,59, Email 12,98, TikTok 16,52 y Email + TikTok 13,91. Con el 1 de abril: Meta 3,72, Google 4,74, Email 13,42, TikTok 19,51 y Email + TikTok 15,05. Con el 15 de marzo: 3,68, 4,84, 13,21, 16,44 y 14,07. La conclusión no depende del día: Meta devuelve mucho menos que Email y TikTok en los tres casos.
-- **"Newsletter" cuenta como Email.** Aparte, el ROAS de Email pasaría de 13,21 a 8,38 y el de Email + TikTok de 14,07 a 10,53. Meta seguiría devolviendo menos.
-- **"Instagram Ads" cuenta como Meta Ads.** Porque el anexo define Meta como Instagram y Facebook. Por separado, Meta Ads tendría 890,16 € de gasto, 5.161,65 € de ventas y un ROAS de 5,80, e Instagram Ads 643,42 € de gasto, 483,56 € de ventas (6 pedidos) y un ROAS de 0,75. Meta seguiría devolviendo menos que Email y TikTok, pero ya no sería el canal pagado que menos devuelve en conjunto: el peor sería Instagram Ads, y Meta Ads quedaría por encima de Google (4,84).
-- **Quitar la fila duplicada de gasto.** Con ella, el gasto de Google Ads sería 791,45 € en vez de 782,98 € y su ROAS 4,79 en vez de 4,84.
-- **Excluir las líneas con ID de producto erróneo.** Porque no tienen ficha, así que no se sabe qué producto ni qué categoría son, y además descuadran con `orders`. Si se incluyeran, las líneas ya no sumarían el subtotal de los pedidos y habría 579,20 € sin producto ni categoría en las conclusiones 5 y 6.
-- **Mantener los productos inactivos.** Son ventas reales del semestre. Sin ellos se perderían 2.753,90 € (6,6 %) y el top 5 pasaría a ser Bolso, Vestido, Pantalón, Zapatillas Running y Zapatillas Classic.
-- **Zapatillas Trail Urbanas en Accesorios (la ficha).** Si se contaran como Calzado, Calzado en Alemania subiría un 31,4 % (en vez de 24,4 %) y pesaría el 33,3 %; en España bajaría un 12,8 % (en vez de 8,5 %) y pesaría el 16,3 %. La dirección no cambia.
-- **No usar la vista `v_kpis_mensuales`.** Con ella, enero a junio saldría con 744 pedidos en vez de 719.
-- **ROAS medio sobre ventas atribuidas.** No hay datos de gasto incremental ni de márgenes, así que no calculo ROAS marginal ni beneficio.
-- **Nota sobre sql**. Los archivos cuyo nombre lleva conclusion (02, 03, 05, 06, 10 y 11) son las queries de las seis conclusiones de este README, tal cual. Los que llevan panel alimentan los gráficos del panel y no son conclusiones; están para que cada cifra del panel tenga su query en el repositorio.
 - **Alcance del modelo**.La base tiene 9 tablas y 3 vistas. Para estas conclusiones solo hacen falta orders, order_items y products, cruzadas por clave, y marketing_spend, que no tiene clave común y se une por el nombre del canal. No he usado customers, refunds, product_reviews, promotions ni order_promotions porque ninguna conclusión las necesita. Se podría modelar más, pero me ceñí a lo que responden las preguntas del encargo. Este es el modelo completo de la base, con las relaciones deducidas de los nombres de las columnas:
 
 ```mermaid
@@ -518,6 +464,59 @@ erDiagram
         text currency_unit
     }
 ```
+
+### Qué filas entran en cada cifra
+
+De 767 pedidos en `orders` quedan 585 analizables. Cada paso es un filtro de las queries:
+
+| Paso | Pedidos que quedan | Quitados | Por qué |
+|---|---|---|---|
+| Tabla `orders` | 767 | | |
+| Fuera julio (`created_at < '2026-07-01'`) | 719 | 48 | El mes está a medias (los datos llegan al 12 de julio) y el análisis es del primer semestre. |
+| Fuera dados de baja (`deleted_at` no nulo) | 708 | 11 | Pedidos anulados en el sistema. |
+| Fuera `cancelled` y `refunded` | 593 | 115 | No son venta. Entran `delivered` y `pending` (en proceso). |
+| Fuera subtotal menor de 1 € | 585 | 8 | Subtotales de 20 y 70 céntimos; el producto más barato cuesta 9,95 €. |
+
+Resultado: 585 pedidos, 41.786,13 € de ventas y 71,43 € de ticket medio. Es la base de las conclusiones 1, 2, 5 y 6. Las conclusiones 3 y 4 usan solo los creados del 15 de marzo al 30 de junio (350 pedidos).
+
+### Transformaciones por el camino
+
+- **Ventas = `subtotal_cents` / 100.** Es el valor de los productos, sin IVA ni envío: el IVA se ingresa a Hacienda y es distinto en Alemania (19 %) y España (21 %), y el envío es un coste trasladado al cliente.
+- **Canal del pedido.** Unifico las variantes de Meta ("Meta Ads", "Meta Ads " con espacio, "META ADS"), sumo "Instagram Ads" a Meta Ads (el anexo define Meta como Instagram y Facebook) y paso "Newsletter" a Email (es email marketing y `marketing_spend` no tiene canal Newsletter): 27 pedidos, 1.907,62 €.
+- **Gasto.** Quito espacios y sumo "Instagram Ads" a Meta Ads. Google Ads viene en céntimos (`EUR_CENTS`) y el resto en euros: paso todo a euros.
+- **Duplicado de gasto.** Dejo una sola fila por fecha y canal: se elimina una de Google Ads del 22 de mayo (8,47 €). El tramo del 15 de marzo al 30 de junio queda en 540 filas, 108 días por 5 canales.
+- **Cruce de canales.** Cada tabla se resume por canal en la ventana (ventas y pedidos por un lado, gasto por otro) y se unen los resúmenes por el nombre del canal.
+- **Importe de línea = cantidad × `unit_price_cents` / 100.** Con las líneas que tienen ficha, la suma coincide exactamente con el subtotal de los 585 pedidos.
+- **Exclusión de productos con ID erróneo.** 16 líneas de pedidos analizables apuntan a un `product_id` entre 901 y 919 que no existe en `products` (579,20 €). Las considero erróneas y las excluyo al cruzar con el catálogo. Al quitarlas, la suma de las líneas coincide exactamente con el subtotal de los 585 pedidos de `orders`, lo que indica que son líneas erróneas.
+- **Sudaderas.** "Sudadera con Capucha" (id 24, del 4 de enero al 14 de marzo a 54,95 €) y "Sudadera Capucha" (id 2, desde el 18 de marzo a 59,95 €) no se solapan: las unifico como un solo producto.
+- **Productos inactivos.** Los de `active = false` (Camiseta Técnica, Mochila Deporte y Sudadera con Capucha) se mantienen: tienen ventas reales en el semestre (2.753,90 €, el 6,6 %).
+- **Categoría.** La de la ficha del producto: las Zapatillas Trail Urbanas figuran en Accesorios y se respeta.
+- **Cliente y repetición.** Cliente = `customer_id` con pedidos analizables en ese país; repite quien tiene 2 o más pedidos en el semestre.
+- **Periodos.** T1 = enero–marzo y T2 = abril–junio. Deporte tiene fecha de alta el 1 de mayo, así que solo se compara mayo con junio.
+
+---
+
+## Supuestos y limitaciones
+
+### Supuestos
+
+Cada uno dice qué hice, por qué y cuánto cambiaría el resultado con la otra opción.
+
+- **Ventas sin IVA ni envío.** Porque el IVA no es ingreso y cambia por país. Con el importe total facturado (`total_amount_cents`) serían 51.590,27 € y el ticket medio 88,19 €, con 9.804,14 € de IVA y envío mezclados.
+- **Entran `delivered` y `pending`.** Porque los pendientes siguen en curso. Solo con `delivered`: 559 pedidos, 40.047,64 € y ticket de 71,64 €. Con `cancelled` y `refunded` dentro: 700 pedidos, 50.125,79 € y ticket de 71,61 €. El ticket casi no se mueve, pero las ventas subirían 8.339,66 € de pedidos que no son venta.
+- **Julio fuera.** Porque el mes está a medias. Con julio: 626 pedidos, 44.625,68 € y ticket de 71,29 €.
+- **Pedidos "Dados de baja" fuera.** Con ellos: 596 pedidos, 42.483,12 € y ticket de 71,28 €.
+- **Subtotales de menos de 1 € considerados outliers.** Con ellos: 593 pedidos, 41.790,79 € y el ticket baja a 70,47 € (casi un euro menos por 8 pedidos que no pueden ser compras reales).
+- **Ventana de canales desde el 15 de marzo.** El anexo dice que en marzo cambió la atribución, pero no el día. Con el 1 de marzo el ROAS (ventas atribuidas / gasto) sería: Meta 3,45, Google 4,59, Email 12,98, TikTok 16,52 y Email + TikTok 13,91. Con el 1 de abril: Meta 3,72, Google 4,74, Email 13,42, TikTok 19,51 y Email + TikTok 15,05. Con el 15 de marzo: 3,68, 4,84, 13,21, 16,44 y 14,07. La conclusión no depende del día: Meta devuelve mucho menos que Email y TikTok en los tres casos.
+- **"Newsletter" cuenta como Email.** Aparte, el ROAS de Email pasaría de 13,21 a 8,38 y el de Email + TikTok de 14,07 a 10,53. Meta seguiría devolviendo menos.
+- **"Instagram Ads" cuenta como Meta Ads.** Porque el anexo define Meta como Instagram y Facebook. Por separado, Meta Ads tendría 890,16 € de gasto, 5.161,65 € de ventas y un ROAS de 5,80, e Instagram Ads 643,42 € de gasto, 483,56 € de ventas (6 pedidos) y un ROAS de 0,75. Meta seguiría devolviendo menos que Email y TikTok, pero ya no sería el canal pagado que menos devuelve en conjunto: el peor sería Instagram Ads, y Meta Ads quedaría por encima de Google (4,84).
+- **Quitar la fila duplicada de gasto.** Con ella, el gasto de Google Ads sería 791,45 € en vez de 782,98 € y su ROAS 4,79 en vez de 4,84.
+- **Excluir las líneas con ID de producto erróneo.** Porque no tienen ficha, así que no se sabe qué producto ni qué categoría son, y además descuadran con `orders`. Si se incluyeran, las líneas ya no sumarían el subtotal de los pedidos y habría 579,20 € sin producto ni categoría en las conclusiones 5 y 6.
+- **Mantener los productos inactivos.** Son ventas reales del semestre. Sin ellos se perderían 2.753,90 € (6,6 %) y el top 5 pasaría a ser Bolso, Vestido, Pantalón, Zapatillas Running y Zapatillas Classic.
+- **Zapatillas Trail Urbanas en Accesorios (la ficha).** Si se contaran como Calzado, Calzado en Alemania subiría un 31,4 % (en vez de 24,4 %) y pesaría el 33,3 %; en España bajaría un 12,8 % (en vez de 8,5 %) y pesaría el 16,3 %. La dirección no cambia.
+- **No usar la vista `v_kpis_mensuales`.** Con ella, enero a junio saldría con 744 pedidos en vez de 719.
+- **ROAS medio sobre ventas atribuidas.** No hay datos de gasto incremental ni de márgenes, así que no calculo ROAS marginal ni beneficio.
+- **Nota sobre sql**. Los archivos cuyo nombre lleva conclusion (02, 03, 05, 06, 10 y 11) son las queries de las seis conclusiones de este README, tal cual. Los que llevan panel alimentan los gráficos del panel y no son conclusiones; están para que cada cifra del panel tenga su query en el repositorio.
 
 ### Limitaciones
 
