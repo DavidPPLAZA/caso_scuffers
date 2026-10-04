@@ -524,7 +524,7 @@ erDiagram
 - **Pocos datos y sin año anterior.** Solo hay seis meses (585 pedidos y, en Alemania, 37 clientes) y no hay datos del mismo periodo de 2025: sin ese punto de comparación es complicado saber qué es "bueno", "malo" o "normal", porque entre meses no es una comparación fiel del desempeño. Además, Deporte tiene dos meses de ventas y TikTok 143,35 € de gasto y 34 pedidos, así que sus cifras pueden moverse mucho.
 - **Sin márgenes ni costes.** Todo es retorno en ventas, no beneficio. Un canal con buen ROAS no tiene por qué ser rentable.
 - **El gasto no viene por país.** No se sabe a qué pais va dirigido el gasto por canal con los datos que tenemos porque no está diferenciado, y hemos podido comprobar que hay una diferencia muy grande entre la naturaleza de Alemania y España por lo que sería interesante tenerlo.
-- **Discrepancias con el anexo.** Deporte existe en los datos desde el 1 de mayo, no desde principios de año. El anexo habla de un mercado incipiente en Alemania, pero genera el 50,7 % de las ventas.
+- **Discrepancias con el anexo.** Deporte fué dado de alta según los datos el 1 de mayo, no desde principios de año. El anexo habla de un mercado incipiente en Alemania, pero genera el 50,7 % de las ventas.
 
 
 ---
