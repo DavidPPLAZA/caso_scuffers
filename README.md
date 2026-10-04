@@ -430,29 +430,99 @@ Cada uno dice qué hice, por qué y cuánto cambiaría el resultado con la otra 
 - **Subtotales de menos de 1 € considerados outliers.** Con ellos: 593 pedidos, 41.790,79 € y el ticket baja a 70,47 € (casi un euro menos por 8 pedidos que no pueden ser compras reales).
 - **Ventana de canales desde el 15 de marzo.** El anexo dice que en marzo cambió la atribución, pero no el día. Con el 1 de marzo el ROAS (ventas atribuidas / gasto) sería: Meta 3,45, Google 4,59, Email 12,98, TikTok 16,52 y Email + TikTok 13,91. Con el 1 de abril: Meta 3,72, Google 4,74, Email 13,42, TikTok 19,51 y Email + TikTok 15,05. Con el 15 de marzo: 3,68, 4,84, 13,21, 16,44 y 14,07. La conclusión no depende del día: Meta devuelve mucho menos que Email y TikTok en los tres casos.
 - **"Newsletter" cuenta como Email.** Aparte, el ROAS de Email pasaría de 13,21 a 8,38 y el de Email + TikTok de 14,07 a 10,53. Meta seguiría devolviendo menos.
+- **"Instagram Ads" cuenta como Meta Ads.** Porque el anexo define Meta como Instagram y Facebook. Por separado, Meta Ads tendría 890,16 € de gasto, 5.161,65 € de ventas y un ROAS de 5,80, e Instagram Ads 643,42 € de gasto, 483,56 € de ventas (6 pedidos) y un ROAS de 0,75. Meta seguiría devolviendo menos que Email y TikTok, pero ya no sería el canal pagado que menos devuelve en conjunto: el peor sería Instagram Ads, y Meta Ads quedaría por encima de Google (4,84).
 - **Quitar la fila duplicada de gasto.** Con ella, el gasto de Google Ads sería 791,45 € en vez de 782,98 € y su ROAS 4,79 en vez de 4,84.
 - **Excluir las líneas con ID de producto erróneo.** Porque no tienen ficha, así que no se sabe qué producto ni qué categoría son, y además descuadran con `orders`. Si se incluyeran, las líneas ya no sumarían el subtotal de los pedidos y habría 579,20 € sin producto ni categoría en las conclusiones 5 y 6.
 - **Mantener los productos inactivos.** Son ventas reales del semestre. Sin ellos se perderían 2.753,90 € (6,6 %) y el top 5 pasaría a ser Bolso, Vestido, Pantalón, Zapatillas Running y Zapatillas Classic.
 - **Zapatillas Trail Urbanas en Accesorios (la ficha).** Si se contaran como Calzado, Calzado en Alemania subiría un 31,4 % (en vez de 24,4 %) y pesaría el 33,3 %; en España bajaría un 12,8 % (en vez de 8,5 %) y pesaría el 16,3 %. La dirección no cambia.
 - **No usar la vista `v_kpis_mensuales`.** Con ella, enero a junio saldría con 744 pedidos en vez de 719.
 - **ROAS medio sobre ventas atribuidas.** No hay datos de gasto incremental ni de márgenes, así que no calculo ROAS marginal ni beneficio.
+- **Diseño del panel.** Lo he hecho simple, en tonos grises, blancos y negros, y organizado en tres pestañas (Ventas, Canales y Productos) que responden a tres preguntas de dirección: cuánto se ha vendido y cómo ha evolucionado, qué canales funcionan y qué categorías y productos funcionan. Prioricé que las cifras se lean rápido y se puedan defender frente a un diseño más vistoso. Un diseño distinto no cambiaría ninguna cifra, solo la forma de verlas.
 - **Nota sobre sql**. Los archivos cuyo nombre lleva conclusion (02, 03, 05, 06, 10 y 11) son las queries de las seis conclusiones de este README, tal cual. Los que llevan panel alimentan los gráficos del panel y no son conclusiones; están para que cada cifra del panel tenga su query en el repositorio.
 - **Alcance del modelo**.La base tiene 9 tablas y 3 vistas. Para estas conclusiones solo hacen falta orders, order_items y products, cruzadas por clave, y marketing_spend, que no tiene clave común y se une por el nombre del canal. No he usado customers, refunds, product_reviews, promotions ni order_promotions porque ninguna conclusión las necesita. Se podría modelar más, pero me ceñí a lo que responden las preguntas del encargo. Este es el modelo completo de la base, con las relaciones deducidas de los nombres de las columnas:
 
-### Decisiones que sí cambian la conclusión
-
-- **"Instagram Ads" dentro de Meta Ads.** Lo sumo porque el anexo define Meta como Instagram y Facebook. Por separado, Meta Ads tendría 890,16 € de gasto, 5.161,65 € de ventas y un ROAS de 5,80, e Instagram Ads 643,42 € de gasto, 483,56 € de ventas (6 pedidos) y un ROAS de 0,75. Meta seguiría devolviendo menos que Email y TikTok, pero ya no sería el canal pagado que menos devuelve en conjunto: el peor sería Instagram Ads, y Meta Ads quedaría por encima de Google (4,84).
-- **Unificar las dos sudaderas.** Si fueran dos productos, la Sudadera Capucha (1.858,45 €) saldría del top 5 y entraría Zapatillas Classic: el top 5 sumaría 15.426,92 € (36,9 %) en vez de 16.320,52 € (39,1 %).
+```mermaid
+erDiagram
+    customers ||--o{ orders : "customer_id"
+    orders ||--o{ order_items : "order_id"
+    products ||--o{ order_items : "product_id"
+    orders ||--o{ order_promotions : "order_id"
+    promotions ||--o{ order_promotions : "promotion_id"
+    orders ||--o{ refunds : "order_id"
+    products ||--o{ product_reviews : "product_id"
+    customers ||--o{ product_reviews : "customer_id"
+    customers {
+        int id
+        text full_name
+        text email
+        text country
+        date created_at
+    }
+    orders {
+        int id
+        int customer_id
+        text channel
+        text country
+        text status
+        date created_at
+        date deleted_at
+        int subtotal_cents
+        int shipping_cents
+        int tax_cents
+        int total_amount_cents
+    }
+    order_items {
+        int id
+        int order_id
+        int product_id
+        int quantity
+        int unit_price_cents
+    }
+    products {
+        int id
+        text name
+        text category
+        int price_cents
+        date created_at
+        bool active
+    }
+    promotions {
+        int id
+        text name
+        int discount_pct
+    }
+    order_promotions {
+        int id
+        int order_id
+        int promotion_id
+    }
+    refunds {
+        int id
+        int order_id
+        int amount_cents
+        text reason
+        date created_at
+    }
+    product_reviews {
+        int id
+        int product_id
+        int customer_id
+        int rating
+        text body
+        date created_at
+    }
+    marketing_spend {
+        int id
+        date date
+        text channel
+        numeric spend_raw
+        text currency_unit
+    }
+```
 
 ### Limitaciones
 
-- **No hay datos del año anterior.** No se puede comparar con el mismo periodo de 2025 porque no hay datos, la comparación para saber que es "bueno", "malo" o "normal" es complicada porque entre meses no es una comparación fiel del desempeño.
-- **Pocos datos.** Seis meses, 585 pedidos y, en Alemania, solo 37 clientes. Deporte tiene dos meses de ventas y TikTok 143,35 € de gasto y 34 pedidos: sus cifras pueden moverse mucho.
+- **Pocos datos y sin año anterior.** Solo hay seis meses (585 pedidos y, en Alemania, 37 clientes) y no hay datos del mismo periodo de 2025: sin ese punto de comparación es complicado saber qué es "bueno", "malo" o "normal", porque entre meses no es una comparación fiel del desempeño. Además, Deporte tiene dos meses de ventas y TikTok 143,35 € de gasto y 34 pedidos, así que sus cifras pueden moverse mucho.
 - **Sin márgenes ni costes.** Todo es retorno en ventas, no beneficio. Un canal con buen ROAS no tiene por qué ser rentable.
-- **Atribución.** El ROAS es medio, no marginal: con poco gasto no tiene por qué mantenerse al subirlo. El modelo de atribución cambió en marzo y no se sabe el día exacto.
 - **El gasto no viene por país.** No se sabe a qué pais va dirigido el gasto por canal con los datos que tenemos porque no está diferenciado, y hemos podido comprobar que hay una diferencia muy grande entre la naturaleza de Alemania y España por lo que sería interesante tenerlo.
-- **Julio incompleto.** Hay pedidos hasta el 12 de julio, pero no se usan.
 - **Discrepancias con el anexo.** Deporte existe en los datos desde el 1 de mayo, no desde principios de año. El anexo habla de un mercado incipiente en Alemania, pero genera el 50,7 % de las ventas.
-
-**Nota sobre sql**. Los archivos cuyo nombre lleva conclusion (02, 03, 05, 06, 10 y 11) son las queries de las seis conclusiones de este README, tal cual. Los que llevan panel alimentan los gráficos del panel y no son conclusiones; están para que cada cifra del panel tenga su query en el repositorio.
-**Alcance del modelo**
