@@ -437,7 +437,6 @@ Cada uno dice qué hice, por qué y cuánto cambiaría el resultado con la otra 
 - **Zapatillas Trail Urbanas en Accesorios (la ficha).** Si se contaran como Calzado, Calzado en Alemania subiría un 31,4 % (en vez de 24,4 %) y pesaría el 33,3 %; en España bajaría un 12,8 % (en vez de 8,5 %) y pesaría el 16,3 %. La dirección no cambia.
 - **No usar la vista `v_kpis_mensuales`.** Con ella, enero a junio saldría con 744 pedidos en vez de 719.
 - **ROAS medio sobre ventas atribuidas.** No hay datos de gasto incremental ni de márgenes, así que no calculo ROAS marginal ni beneficio.
-- **Diseño del panel.** Lo he hecho simple, en tonos grises, blancos y negros, y organizado en tres pestañas (Ventas, Canales y Productos) que responden a tres preguntas de dirección: cuánto se ha vendido y cómo ha evolucionado, qué canales funcionan y qué categorías y productos funcionan. Prioricé que las cifras se lean rápido y se puedan defender.
 - **Nota sobre sql**. Los archivos cuyo nombre lleva conclusion (02, 03, 05, 06, 10 y 11) son las queries de las seis conclusiones de este README, tal cual. Los que llevan panel alimentan los gráficos del panel y no son conclusiones; están para que cada cifra del panel tenga su query en el repositorio.
 - **Alcance del modelo**.La base tiene 9 tablas y 3 vistas. Para estas conclusiones solo hacen falta orders, order_items y products, cruzadas por clave, y marketing_spend, que no tiene clave común y se une por el nombre del canal. No he usado customers, refunds, product_reviews, promotions ni order_promotions porque ninguna conclusión las necesita. Se podría modelar más, pero me ceñí a lo que responden las preguntas del encargo. Este es el modelo completo de la base, con las relaciones deducidas de los nombres de las columnas:
 
@@ -526,3 +525,14 @@ erDiagram
 - **Sin márgenes ni costes.** Todo es retorno en ventas, no beneficio. Un canal con buen ROAS no tiene por qué ser rentable.
 - **El gasto no viene por país.** No se sabe a qué pais va dirigido el gasto por canal con los datos que tenemos porque no está diferenciado, y hemos podido comprobar que hay una diferencia muy grande entre la naturaleza de Alemania y España por lo que sería interesante tenerlo.
 - **Discrepancias con el anexo.** Deporte existe en los datos desde el 1 de mayo, no desde principios de año. El anexo habla de un mercado incipiente en Alemania, pero genera el 50,7 % de las ventas.
+
+
+---
+
+## Decisiones de presentación
+
+- **Para quién es cada vista.** Ventas es para todos los equipos, Canales para marketing y dirección, que decide el presupuesto, y Productos para producto y ecommerce.
+- **Qué puse primero y por qué.** Las cifras de cabecera (ventas, pedidos y ticket medio, con el criterio escrito debajo) y, a continuación, las pestañas en el orden de las preguntas de dirección: cuánto se ha vendido y cómo ha evolucionado, dónde invertir y qué productos funcionan. Dentro de Canales, primero el gasto y lo que devuelve cada canal, que es lo que decide el presupuesto.
+- **Qué dejé fuera a propósito.** El análisis de promociones. La tabla de promociones no tiene fechas de inicio ni de fin, y dos de ellas se usan fuera del periodo que indica su nombre: Black Week tiene pedidos en cinco de los seis meses y 6 de los 21 pedidos de Flash Sale Marzo son de otros meses. Sin contexto de negocio para saber cuándo estuvo activa cada una, no puedo decir si es normal, así que no saco conclusiones de ellas.
+- **Gráfico descartado.** La serie temporal de ventas diarias como gráfico principal: con tan pocos meses es muy ruidosa y tiene muchos picos. Lo sustituí por barras mensuales apiladas por país como gráfico principal y, para quien quiera profundizar, al pulsar una barra se abre el gráfico de líneas de ese mes, día a día.
+- **Diseño.** Simple, en tonos grises, blancos y negros, para que la atención vaya a las cifras y no al aspecto.
